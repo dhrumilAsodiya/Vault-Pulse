@@ -1,0 +1,6 @@
+{
+  "name": "VaultPulse",
+  "description": "Offline-first personal wealth intelligence and checkpoint ledger with Obsidian Flow Material 3 dark theme, SMS/UPI auto-capture, 2-step bank sync, and local keyword categorization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

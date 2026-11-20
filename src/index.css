@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --bg-canvas: #0b0c0e;
+    --surface: #121316;
+    --surface-container: #1a1c1e;
+    --surface-container-high: #222428;
+    --surface-container-highest: #2d3036;
+    --primary: #818cf8;
+    --secondary: #2dd4bf;
+    --tertiary: #4de082;
+    --rose: #f87171;
+    --amber: #fbbf24;
+  }
+
+  html,
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-canvas);
+    color: #e3e2e6;
+    overflow-x: hidden;
+  }
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle dark AMOLED scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0c0e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d3036;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #454653;
+}
