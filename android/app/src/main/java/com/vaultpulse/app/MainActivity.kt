@@ -9,16 +9,28 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -26,8 +38,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,8 +72,6 @@ class MainActivity : FragmentActivity() {
         )
         enableEdgeToEdge()
 
-        promptBiometricUnlock()
-
         setContent {
             ObsidianFlowTheme {
                 Surface(
@@ -66,42 +82,117 @@ class MainActivity : FragmentActivity() {
                         val vm: VaultViewModel = viewModel()
                         VaultPulseRoot(viewModel = vm)
                     } else {
+                        // Branded biometric lock screen
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            ObsidianColors.PrimaryContainer.copy(alpha = 0.08f),
+                                            ObsidianColors.Canvas
+                                        )
+                                    )
+                                )
                                 .statusBarsPadding()
                                 .navigationBarsPadding()
-                                .padding(24.dp),
+                                .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(0.dp)
                             ) {
-                                Text(
-                                    text = "VaultPulse Locked",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = ObsidianColors.OnSurface
+                                // Pulsing ring + shield icon
+                                val pulse = rememberInfiniteTransition(label = "pulse")
+                                val pulseScale by pulse.animateFloat(
+                                    initialValue = 1f,
+                                    targetValue = 1.12f,
+                                    animationSpec = infiniteRepeatable(
+                                        tween(1200),
+                                        RepeatMode.Reverse
+                                    ),
+                                    label = "pulseScale"
                                 )
-                                Text(
-                                    text = "Authenticate with device biometrics to decrypt your offline vault.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ObsidianColors.OnSurfaceVariant
-                                )
-                                Button(
-                                    onClick = { promptBiometricUnlock() },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = ObsidianColors.PrimaryIndigo,
-                                        contentColor = ObsidianColors.Canvas
-                                    )
+                                Box(
+                                    modifier = Modifier
+                                        .size(96.dp)
+                                        .scale(pulseScale)
+                                        .clip(CircleShape)
+                                        .background(ObsidianColors.PrimaryContainer.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text("Unlock Vault", fontWeight = FontWeight.Bold)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(CircleShape)
+                                            .background(ObsidianColors.PrimaryContainer.copy(alpha = 0.18f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Shield,
+                                            contentDescription = "VaultPulse",
+                                            tint = ObsidianColors.PrimaryContainer,
+                                            modifier = Modifier.size(36.dp)
+                                        )
+                                    }
                                 }
+                                Spacer(Modifier.height(28.dp))
+                                Text(
+                                    text = "VaultPulse",
+                                    fontSize = 26.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ObsidianColors.OnSurface,
+                                    letterSpacing = (-0.02).sp
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = "Your encrypted offline finance vault",
+                                    fontSize = 13.sp,
+                                    color = ObsidianColors.OnSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(Modifier.height(48.dp))
+                                // Fingerprint tap target
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = ObsidianColors.SurfaceContainerHigh,
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clickable { promptBiometricUnlock() }
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text("☝", fontSize = 32.sp)
+                                    }
+                                }
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    text = "Touch sensor to unlock",
+                                    fontSize = 12.sp,
+                                    color = ObsidianColors.OnSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = "Tap anywhere to retry",
+                                    fontSize = 11.sp,
+                                    color = ObsidianColors.PrimaryContainer.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.clickable { promptBiometricUnlock() }
+                                )
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Auto-trigger fingerprint scan every time app comes to foreground if still locked
+        if (!isUnlocked) {
+            promptBiometricUnlock()
         }
     }
 
@@ -131,14 +222,15 @@ class MainActivity : FragmentActivity() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     isUnlocked = true
-                    checkAndRequestSmsPermissions()
+                    // SMS permission is requested lazily when the user taps "Sync SMS"
+                    // — never from inside a biometric callback (causes requestCode crash)
                 }
             }
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Unlock VaultPulse")
-            .setSubtitle("Access encrypted on-device accounts & ledger")
+            .setSubtitle("Use fingerprint or device PIN to decrypt your vault")
             .setAllowedAuthenticators(
                 BiometricManager.Authenticators.BIOMETRIC_STRONG or
                     BiometricManager.Authenticators.DEVICE_CREDENTIAL

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -92,6 +93,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,8 +121,43 @@ import com.vaultpulse.app.ui.theme.ObsidianColors
 import com.vaultpulse.app.ui.viewmodel.VaultUiState
 import com.vaultpulse.app.ui.viewmodel.VaultViewModel
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+// ---- Relative date formatter ----
+private fun relativeTimestamp(ts: Long): String {
+    val now = System.currentTimeMillis()
+    val cal = Calendar.getInstance().apply { timeInMillis = ts }
+    val today = Calendar.getInstance()
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+
+    val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(ts))
+    return when {
+        cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+            cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) ->
+            "Today $timeStr"
+        cal.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+            cal.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) ->
+            "Yesterday $timeStr"
+        else ->
+            SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(ts))
+    }
+}
+
+// ---- Date key for grouping ----
+private fun dayKey(ts: Long): String {
+    val cal = Calendar.getInstance().apply { timeInMillis = ts }
+    val today = Calendar.getInstance()
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    return when {
+        cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+            cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) -> "Today"
+        cal.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+            cal.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) -> "Yesterday"
+        else -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date(ts))
+    }
+}
 
 enum class VaultTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Rounded.AccountBalanceWallet),
@@ -1045,15 +1082,25 @@ fun LedgerScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf<TransactionType?>(null) }
-    var selectedTxForMenu by remember { mutableStateOf<TransactionEntity?>(null) }
 
-    val filteredList = remember(state.transactions, selectedFilter, searchQuery) {
-        state.transactions.filter { tx ->
-            val matchFilter = selectedFilter == null || tx.type == selectedFilter
-            val matchSearch = searchQuery.isBlank() ||
-                tx.merchant.contains(searchQuery, ignoreCase = true) ||
-                tx.category.contains(searchQuery, ignoreCase = true)
-            matchFilter && matchSearch
+    // Use derivedStateOf to avoid recomputing on every recomposition
+    val filteredList by remember(state.transactions, selectedFilter, searchQuery) {
+        derivedStateOf {
+            state.transactions.filter { tx ->
+                val matchFilter = selectedFilter == null || tx.type == selectedFilter
+                val matchSearch = searchQuery.isBlank() ||
+                    tx.merchant.contains(searchQuery, ignoreCase = true) ||
+                    tx.category.contains(searchQuery, ignoreCase = true)
+                matchFilter && matchSearch
+            }
+        }
+    }
+
+    // Group by day for section headers
+    val groupedTxs by remember(filteredList) {
+        derivedStateOf {
+            filteredList.groupBy { dayKey(it.timestamp) }
+                .entries.toList()
         }
     }
 
@@ -1093,8 +1140,6 @@ fun LedgerScreen(
                             Icon(Icons.Rounded.Close, contentDescription = "Clear", tint = ObsidianColors.Outline, modifier = Modifier.size(16.dp))
                         }
                     }
-                    Icon(Icons.Rounded.Mic, contentDescription = "Voice", tint = ObsidianColors.OnSurfaceVariant, modifier = Modifier.size(19.dp))
-                    Icon(Icons.Rounded.DocumentScanner, contentDescription = "Scan", tint = ObsidianColors.OnSurfaceVariant, modifier = Modifier.size(19.dp))
                 }
             }
         }
@@ -1128,7 +1173,7 @@ fun LedgerScreen(
                     onClick = { selectedFilter = TransactionType.CREDIT }
                 )
                 LedgerFilterPill(
-                    label = "Self-Transfer",
+                    label = "Transfer",
                     icon = Icons.Rounded.SwapHoriz,
                     iconTint = ObsidianColors.Secondary,
                     selected = selectedFilter == TransactionType.SELF_TRANSFER,
@@ -1182,8 +1227,8 @@ fun LedgerScreen(
             }
         }
 
-        // Transactions Feed
-        if (filteredList.isEmpty()) {
+        // Transactions Feed — grouped by date
+        if (groupedTxs.isEmpty()) {
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
@@ -1204,29 +1249,49 @@ fun LedgerScreen(
                 }
             }
         } else {
-            item {
-                Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = ObsidianColors.SurfaceContainer,
-                    border = BorderStroke(1.dp, ObsidianColors.HairlineBorder)
-                ) {
-                    Column {
-                        filteredList.forEachIndexed { index, tx ->
-                            LedgerItemRow(
-                                transaction = tx,
-                                accounts = state.accounts,
-                                onReassign = { onTapAccountBadge(tx) },
-                                onEdit = { onEditTx(tx) },
-                                onDelete = { onDeleteTx(tx) }
-                            )
-                            if (index < filteredList.size - 1) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                        .height(1.dp)
-                                        .background(ObsidianColors.SurfaceContainerHighest.copy(alpha = 0.5f))
+            groupedTxs.forEach { (dayLabel, txsForDay) ->
+                // Day header
+                item(key = "header_$dayLabel") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = dayLabel,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ObsidianColors.OnSurfaceVariant,
+                            letterSpacing = 0.03.sp
+                        )
+                        Box(modifier = Modifier.weight(1f).height(1.dp).background(ObsidianColors.SurfaceContainerHighest))
+                    }
+                }
+                // Transactions for this day
+                item(key = "group_$dayLabel") {
+                    Surface(
+                        shape = RoundedCornerShape(22.dp),
+                        color = ObsidianColors.SurfaceContainer,
+                        border = BorderStroke(1.dp, ObsidianColors.HairlineBorder)
+                    ) {
+                        Column {
+                            txsForDay.forEachIndexed { index, tx ->
+                                LedgerItemRow(
+                                    transaction = tx,
+                                    accounts = state.accounts,
+                                    onReassign = { onTapAccountBadge(tx) },
+                                    onEdit = { onEditTx(tx) },
+                                    onDelete = { onDeleteTx(tx) }
                                 )
+                                if (index < txsForDay.size - 1) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp)
+                                            .height(1.dp)
+                                            .background(ObsidianColors.SurfaceContainerHighest.copy(alpha = 0.5f))
+                                    )
+                                }
                             }
                         }
                     }
@@ -1372,7 +1437,7 @@ fun LedgerItemRow(
                 }
             }
 
-            val dateStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(transaction.timestamp))
+            val dateStr = relativeTimestamp(transaction.timestamp)
             Text(
                 text = "$dateStr • ${transaction.category}",
                 fontSize = 11.sp,
@@ -1426,6 +1491,40 @@ fun LedgerItemRow(
 fun AnalyticsScreen(state: VaultUiState) {
     var selectedInterval by remember { mutableStateOf("Month") }
 
+    // Dynamic current month/year
+    val currentMonthYear = remember {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
+    }
+
+    // Real daily spend aggregation for bar chart (last 14 days)
+    val dailySpend = remember(state.transactions) {
+        val cal = Calendar.getInstance()
+        (0 until 14).map { daysAgo ->
+            cal.time
+            val day = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -daysAgo) }
+            val dayTotal = state.transactions.filter {
+                it.type == TransactionType.DEBIT &&
+                Calendar.getInstance().apply { timeInMillis = it.timestamp }.let { txCal ->
+                    txCal.get(Calendar.YEAR) == day.get(Calendar.YEAR) &&
+                    txCal.get(Calendar.DAY_OF_YEAR) == day.get(Calendar.DAY_OF_YEAR)
+                }
+            }.sumOf { it.amount }.toFloat()
+            dayTotal
+        }.reversed()
+    }
+    val maxDailySpend = dailySpend.maxOrNull()?.takeIf { it > 0f } ?: 1f
+
+    // Category breakdown
+    val categoryBreakdown = remember(state.transactions) {
+        state.transactions
+            .filter { it.type == TransactionType.DEBIT }
+            .groupBy { it.category.ifBlank { "General" } }
+            .mapValues { (_, txs) -> txs.sumOf { it.amount } }
+            .entries
+            .sortedByDescending { it.value }
+            .take(5)
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -1442,17 +1541,10 @@ fun AnalyticsScreen(state: VaultUiState) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    IconButton(onClick = { }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Rounded.ChevronLeft, contentDescription = "Prev", tint = ObsidianColors.OnSurfaceVariant)
-                    }
                     Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = ObsidianColors.PrimaryContainer, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("October 2024", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
-                    IconButton(onClick = { }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = "Next", tint = ObsidianColors.OnSurfaceVariant)
-                    }
+                    Text(currentMonthYear, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
                 }
-
                 IconButton(onClick = { }, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Rounded.Tune, contentDescription = "Filter", tint = ObsidianColors.OnSurfaceVariant)
                 }
@@ -1574,7 +1666,109 @@ fun AnalyticsScreen(state: VaultUiState) {
             }
         }
 
-        // Smart Insights Card
+        // Real Spending Trends Bar Chart (last 14 days)
+        item {
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = ObsidianColors.SurfaceContainer,
+                border = BorderStroke(1.dp, ObsidianColors.HairlineBorder)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Spending Trends", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
+                            Text("Daily spend — last 14 days", fontSize = 11.sp, color = ObsidianColors.OnSurfaceVariant)
+                        }
+                        Surface(shape = CircleShape, color = ObsidianColors.SurfaceContainerHigh) {
+                            Text("Current Cycle", fontSize = 10.sp, color = ObsidianColors.Secondary, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                        }
+                    }
+
+                    if (state.transactions.none { it.type == TransactionType.DEBIT }) {
+                        Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
+                            Text("Add transactions to see spending trends", fontSize = 12.sp, color = ObsidianColors.OnSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    } else {
+                        Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val barWidth = 14.dp.toPx()
+                                val spacing = if (dailySpend.size > 1)
+                                    (size.width - (dailySpend.size * barWidth)) / (dailySpend.size - 1)
+                                else 0f
+
+                                val avgY = size.height * 0.5f
+                                drawLine(
+                                    color = ObsidianColors.OutlineVariant,
+                                    start = Offset(0f, avgY),
+                                    end = Offset(size.width, avgY),
+                                    strokeWidth = 1.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+                                )
+
+                                dailySpend.forEachIndexed { i, spend ->
+                                    val x = i * (barWidth + spacing)
+                                    val barH = (spend / maxDailySpend) * (size.height * 0.85f)
+                                    val y = size.height - barH
+                                    val isToday = i == dailySpend.size - 1
+                                    drawRoundRect(
+                                        color = if (isToday) ObsidianColors.Secondary else ObsidianColors.SurfaceContainerHighest,
+                                        topLeft = Offset(x, y),
+                                        size = Size(barWidth, barH.coerceAtLeast(4f)),
+                                        cornerRadius = CornerRadius(6f, 6f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Category Breakdown
+        if (categoryBreakdown.isNotEmpty()) {
+            item {
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    color = ObsidianColors.SurfaceContainer,
+                    border = BorderStroke(1.dp, ObsidianColors.HairlineBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("Spending by Category", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
+                        val catColors = listOf(
+                            Color(0xFFFB923C), ObsidianColors.Secondary, ObsidianColors.Tertiary,
+                            ObsidianColors.PrimaryContainer, ObsidianColors.ExpenseRose
+                        )
+                        categoryBreakdown.forEachIndexed { i, (cat, total) ->
+                            val barFraction = (total / (categoryBreakdown.firstOrNull()?.value ?: 1.0)).toFloat().coerceIn(0f, 1f)
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(cat, fontSize = 12.sp, color = ObsidianColors.OnSurface, fontWeight = FontWeight.Medium)
+                                    Text("₹%,.0f".format(total), fontSize = 12.sp, color = catColors.getOrElse(i) { ObsidianColors.Primary }, fontWeight = FontWeight.Bold)
+                                }
+                                LinearProgressIndicator(
+                                    progress = { barFraction },
+                                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                                    color = catColors.getOrElse(i) { ObsidianColors.Primary },
+                                    trackColor = ObsidianColors.SurfaceContainerHighest
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Privacy Telemetry Card
         item {
             Surface(
                 shape = RoundedCornerShape(20.dp),
@@ -1607,68 +1801,6 @@ fun AnalyticsScreen(state: VaultUiState) {
                 }
             }
         }
-
-        // Spending Trends Bar Chart Canvas
-        item {
-            Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = ObsidianColors.SurfaceContainer,
-                border = BorderStroke(1.dp, ObsidianColors.HairlineBorder)
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Spending Trends", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
-                            Text("Daily burn trends", fontSize = 11.sp, color = ObsidianColors.OnSurfaceVariant)
-                        }
-                        Surface(shape = CircleShape, color = ObsidianColors.SurfaceContainerHigh) {
-                            Text("Current Cycle", fontSize = 10.sp, color = ObsidianColors.Secondary, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
-                        }
-                    }
-
-                    // Compose Canvas Bar Chart
-                    Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val barHeights = listOf(25f, 50f, 30f, 65f, 20f, 45f, 40f, 70f, 90f, 35f, 55f, 35f, 60f, 40f)
-                            val barWidth = 14.dp.toPx()
-                            val spacing = (size.width - (barHeights.size * barWidth)) / (barHeights.size - 1)
-
-                            // Average dashed baseline
-                            val avgY = size.height * 0.5f
-                            drawLine(
-                                color = ObsidianColors.OutlineVariant,
-                                start = Offset(0f, avgY),
-                                end = Offset(size.width, avgY),
-                                strokeWidth = 1.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-                            )
-
-                            // Draw bars
-                            barHeights.forEachIndexed { i, hPct ->
-                                val x = i * (barWidth + spacing)
-                                val barH = (hPct / 100f) * (size.height * 0.85f)
-                                val y = size.height - barH
-                                val color = if (i == 8) ObsidianColors.Secondary else ObsidianColors.SurfaceContainerHighest
-
-                                drawRoundRect(
-                                    color = color,
-                                    topLeft = Offset(x, y),
-                                    size = Size(barWidth, barH),
-                                    cornerRadius = CornerRadius(6f, 6f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1688,6 +1820,7 @@ fun SettingsScreen(
 ) {
     var kwDraft by remember { mutableStateOf("") }
     var catDraft by remember { mutableStateOf("Food & Dining") }
+    var catPickerOpen by remember { mutableStateOf(false) }
     var bankDropdownOpen by remember { mutableStateOf(false) }
     var autoParseSms by remember { mutableStateOf(true) }
     val clipboard = LocalClipboardManager.current
@@ -1990,6 +2123,27 @@ fun SettingsScreen(
                         )
                     )
 
+                    // Category picker for rule
+                    Text("Maps to category: $catDraft", fontSize = 11.sp, color = ObsidianColors.Secondary, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf("Food & Dining", "Fuel & Transport", "Groceries", "Shopping & Retail", "Entertainment", "Income", "Medical", "Utilities", "General").forEach { cat ->
+                            val isSel = catDraft == cat
+                            Surface(
+                                shape = CircleShape,
+                                color = if (isSel) ObsidianColors.SecondaryContainer.copy(alpha = 0.25f) else ObsidianColors.SurfaceContainerHighest,
+                                border = if (isSel) BorderStroke(1.dp, ObsidianColors.Secondary) else null,
+                                modifier = Modifier.clickable { catDraft = cat }
+                            ) {
+                                Text(cat, fontSize = 10.sp, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSel) ObsidianColors.Secondary else ObsidianColors.OnSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
+                            }
+                        }
+                    }
+
                     Button(
                         onClick = {
                             if (kwDraft.isNotBlank()) {
@@ -2055,7 +2209,8 @@ fun EditAccountSheet(
             modifier = Modifier
                 .padding(horizontal = 22.dp, vertical = 10.dp)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
@@ -2286,10 +2441,11 @@ fun AddTransactionSheet(
     onSave: (TransactionType, Double, String, String, String, String?, Boolean) -> Unit
 ) {
     var txType by remember { mutableStateOf(TransactionType.DEBIT) }
-    var amountStr by remember { mutableStateOf("450.00") }
+    var amountStr by remember { mutableStateOf("") }
     var merchant by remember { mutableStateOf("") }
     var selectedCat by remember { mutableStateOf("Food & Dining") }
     var selectedAccountId by remember(accounts) { mutableStateOf(accounts.firstOrNull()?.id.orEmpty()) }
+    var selectedToAccountId by remember(accounts) { mutableStateOf(accounts.drop(1).firstOrNull()?.id) }
     var taxDeductible by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -2305,7 +2461,8 @@ fun AddTransactionSheet(
             modifier = Modifier
                 .padding(horizontal = 22.dp, vertical = 10.dp)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header Row
@@ -2323,7 +2480,7 @@ fun AddTransactionSheet(
                 }
             }
 
-            // Segmented Type Selector (Expense / Income / Transfer)
+            // Segmented Type Selector
             Surface(
                 shape = CircleShape,
                 color = ObsidianColors.SurfaceContainerLowest,
@@ -2388,7 +2545,10 @@ fun AddTransactionSheet(
                                 fontSize = 38.sp,
                                 fontWeight = FontWeight.Bold
                             ),
-                            singleLine = true
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                            )
                         )
                     }
 
@@ -2415,7 +2575,10 @@ fun AddTransactionSheet(
 
             // Paid From Account Selector
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Paid From Account", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ObsidianColors.OnSurfaceVariant)
+                Text(
+                    if (txType == TransactionType.SELF_TRANSFER) "Transfer From" else "Paid From Account",
+                    fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ObsidianColors.OnSurfaceVariant
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2443,29 +2606,64 @@ fun AddTransactionSheet(
                 }
             }
 
-            // Category Selector
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Category: $selectedCat", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ObsidianColors.Secondary)
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val cats = listOf("Food & Dining", "Fuel & Transport", "Groceries", "Shopping & Retail", "Entertainment")
-                    cats.forEach { cat ->
-                        val isSel = selectedCat == cat
-                        Surface(
-                            shape = CircleShape,
-                            color = if (isSel) ObsidianColors.SecondaryContainer.copy(alpha = 0.25f) else ObsidianColors.SurfaceContainerHighest,
-                            border = if (isSel) BorderStroke(1.dp, ObsidianColors.Secondary) else null,
-                            modifier = Modifier.clickable { selectedCat = cat }
-                        ) {
-                            Text(
-                                cat,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSel) ObsidianColors.Secondary else ObsidianColors.OnSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
+            // Transfer To Account Selector (shown only for SELF_TRANSFER)
+            if (txType == TransactionType.SELF_TRANSFER && accounts.size > 1) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Transfer To", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ObsidianColors.Secondary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        accounts.filter { it.id != selectedAccountId }.forEach { acc ->
+                            val isSel = selectedToAccountId == acc.id
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSel) ObsidianColors.SecondaryContainer.copy(alpha = 0.3f) else ObsidianColors.SurfaceContainerHigh,
+                                border = if (isSel) BorderStroke(1.dp, ObsidianColors.Secondary) else null,
+                                modifier = Modifier.clickable { selectedToAccountId = acc.id }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(Icons.Rounded.AccountBalance, contentDescription = null, tint = if (isSel) ObsidianColors.Secondary else ObsidianColors.OnSurfaceVariant, modifier = Modifier.size(16.dp))
+                                    Column {
+                                        Text(acc.shortName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ObsidianColors.OnSurface)
+                                        Text("₹%,.0f".format(acc.balance), fontSize = 10.sp, color = ObsidianColors.OnSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Category Selector (hide for transfers)
+            if (txType != TransactionType.SELF_TRANSFER) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Category: $selectedCat", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ObsidianColors.Secondary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val cats = listOf("Food & Dining", "Fuel & Transport", "Groceries", "Shopping & Retail", "Entertainment", "Income", "Medical", "Utilities", "General")
+                        cats.forEach { cat ->
+                            val isSel = selectedCat == cat
+                            Surface(
+                                shape = CircleShape,
+                                color = if (isSel) ObsidianColors.SecondaryContainer.copy(alpha = 0.25f) else ObsidianColors.SurfaceContainerHighest,
+                                border = if (isSel) BorderStroke(1.dp, ObsidianColors.Secondary) else null,
+                                modifier = Modifier.clickable { selectedCat = cat }
+                            ) {
+                                Text(
+                                    cat,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSel) ObsidianColors.Secondary else ObsidianColors.OnSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -2485,20 +2683,22 @@ fun AddTransactionSheet(
             )
 
             // Tax Deductible Switch
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Mark as tax deductible", fontSize = 13.sp, color = ObsidianColors.OnSurface)
-                Switch(
-                    checked = taxDeductible,
-                    onCheckedChange = { taxDeductible = it },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = ObsidianColors.Canvas,
-                        checkedTrackColor = ObsidianColors.Tertiary
+            if (txType == TransactionType.DEBIT) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Mark as tax deductible", fontSize = 13.sp, color = ObsidianColors.OnSurface)
+                    Switch(
+                        checked = taxDeductible,
+                        onCheckedChange = { taxDeductible = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = ObsidianColors.Canvas,
+                            checkedTrackColor = ObsidianColors.Tertiary
+                        )
                     )
-                )
+                }
             }
 
             // Save Transaction Button
@@ -2507,7 +2707,7 @@ fun AddTransactionSheet(
                     val amt = amountStr.toDoubleOrNull() ?: 0.0
                     val accId = selectedAccountId.ifBlank { accounts.firstOrNull()?.id.orEmpty() }
                     if (amt > 0 && accId.isNotBlank()) {
-                        val dest = if (txType == TransactionType.SELF_TRANSFER) accounts.firstOrNull { it.id != accId }?.id else null
+                        val dest = if (txType == TransactionType.SELF_TRANSFER) selectedToAccountId else null
                         onSave(txType, amt, merchant.ifBlank { "Manual Entry" }, selectedCat, accId, dest, taxDeductible)
                     }
                 },
