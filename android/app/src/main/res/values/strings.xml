@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">VaultPulse</string>
+    <string name="upi_capture_label">VaultPulse UPI Capture</string>
+</resources>
