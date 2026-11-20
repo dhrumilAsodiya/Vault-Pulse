@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'tertiary-fixed': '#6dfe9c', 'primary-fixed-dim': '#bdc2ff', 'primary-fixed': '#e0e0ff', 'tertiary': '#4de082', 'on-primary': '#131e8c', 'on-tertiary-container': '#003617', 'on-secondary-fixed': '#00201c', 'on-error': '#690005', 'on-secondary-fixed-variant': '#005047', 'surface-variant': '#343538', 'background': '#121316', 'surface-container-high': '#292a2d', 'on-secondary': '#003731', 'on-tertiary-fixed-variant': '#005227', 'on-tertiary': '#003919', 'on-surface-variant': '#c6c5d5', 'tertiary-fixed-dim': '#4de082', 'secondary-fixed-dim': '#3cddc7', 'surface-dim': '#121316', 'on-primary-fixed': '#000767', 'outline-variant': '#454653', 'on-primary-fixed-variant': '#2f3aa3', 'on-tertiary-fixed': '#00210c', 'surface-container': '#1f1f23', 'inverse-surface': '#e3e2e6', 'surface-container-low': '#1b1b1f', 'surface-bright': '#38393c', 'secondary': '#44e2cd', 'on-error-container': '#ffdad6', 'on-secondary-container': '#004d44', 'error-container': '#93000a', 'on-surface': '#e3e2e6', 'error': '#ffb4ab', 'on-primary-container': '#101b8a', 'inverse-primary': '#4953bc', 'secondary-container': '#03c6b2', 'surface-tint': '#bdc2ff', 'primary': '#bdc2ff', 'on-background': '#e3e2e6', 'tertiary-container': '#00ac58', 'surface-container-lowest': '#0d0e11', 'outline': '#908f9e', 'surface': '#121316', 'surface-container-highest': '#343538', 'primary-container': '#818cf8', 'inverse-on-surface': '#2f3034', 'secondary-fixed': '#62fae3' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'gutter-mobile': '0.75rem', 'space-sm': '0.5rem', 'space-md': '1rem', 'gutter': '1rem', 'space-xs': '0.25rem', 'space-xl': '2rem', 'margin-tablet': '1.5rem', 'margin-mobile': '1rem', 'space-lg': '1.5rem', 'margin': '1rem' }, fontFamily: { 'headline-sm': ['Plus Jakarta Sans'], 'label-sm': ['Plus Jakarta Sans'], 'body-sm': ['Plus Jakarta Sans'], 'label-md': ['Plus Jakarta Sans'], 'display-lg': ['Plus Jakarta Sans'], 'headline-lg-mobile': ['Plus Jakarta Sans'], 'headline-lg': ['Plus Jakarta Sans'], 'title-md': ['Plus Jakarta Sans'], 'body-lg': ['Plus Jakarta Sans'], 'label-lg': ['Plus Jakarta Sans'], 'body-md': ['Plus Jakarta Sans'], 'headline-md': ['Plus Jakarta Sans'], 'title-lg': ['Plus Jakarta Sans'] }, fontSize: { 'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }], 'label-sm': ['11px', { lineHeight: '14px', letterSpacing: '0.03em', fontWeight: '500' }], 'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-0.03em', fontWeight: '700' }], 'headline-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }], 'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }], 'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.01em', fontWeight: '600' }], 'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-primary selection:text-on-primary"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="h-24 flex flex-col justify-between px-space-md"><div class="h-7 flex items-center justify-between text-on-surface-variant font-label-sm"><span class="font-semibold tracking-tight text-on-surface">09:41</span><div class="flex items-center gap-space-xs"><span class="text-[10px] font-bold tracking-wider">5G</span><span class="material-symbols-outlined text-[16px]">wifi</span><span class="material-symbols-outlined text-[16px]">battery_full</span></div></div><div class="h-17 flex items-center justify-between pb-space-xs"><div class="flex items-center gap-space-sm"><img alt="FinanceShield Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrDmeTUbEbIiPeTlOeKA_iRcIT5xZHNhX51kOjoPCj49kGj1D9vrG4EiTJmzS0LsZ17v6evVoWPI-2gIXQM3C7vaF3sKQ2Pbu7pj2OXOiyzUU-UZ738pKykhTBkq3OVmSR-XGfbaBKbGs7_jiNia0y6LEXZDr83rGGMEkLw3IwbXd9IoFc34mGxru6qoBzhv1fvYp8M1nC-97313AJ54NB8m202u9geA4cHW8ONpDt2idg"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">VaultPulse</span><span class="font-label-sm text-label-sm text-on-surface-variant capitalize leading-tight">Settings</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="relative w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors active:scale-95" type="button"><span class="material-symbols-outlined text-[24px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><button aria-label="Profile" class="w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 transition-opacity active:scale-95" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJrhArxkPHKzD652RigireqmTpUXqTheKUatSMXArSoSIzWYiZ9V5Xaa-Dks25I4itxydJrb6K4MQyvxH_c7tMth616qYqbk1AQpM--lUMl85LNofHrJJS4borNTTOoBEkh86RywGlj0amxJXUaucJPZMBJQgRRywN4Irfj8Fnt9qhn46XyC0k67JT8nOrrEbmvr8f-pjI5NMww5tZhcxj9lJDJF883liYG7c_yjHG"/></button></div></div></div></header><main class="flex-1 flex flex-col w-full pt-24 pb-28 bg-surface px-margin-mobile"><div class="flex flex-col w-full pb-10 space-y-6">
+<!-- Header Text Block -->
+<div class="flex flex-col space-y-1">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary">Configuration Suite</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Settings &amp; Automation</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Rules, account routing &amp; encrypted backups</p>
+</div>
+<!-- Section 1: Default UPI & Payment Routing -->
+<div class="flex flex-col bg-surface-container rounded-[28px] p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface leading-tight">Default UPI &amp; Routing</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Prioritize accounts for auto-payments</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-secondary-container/20 text-secondary">Active</span>
+</div>
+<div class="space-y-3">
+<!-- Active Account Selection Card -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="relative w-11 h-11 rounded-xl bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Official minimalist high-contrast monochrome emblem representing a primary retail banking institution on dark matte surface with micro-accent highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIhHNkf_AWvYYFkun2CO0jek6IGVF1YUrMjziES3FqmBQ39n0YKAxYPv2VhnZKkUAR8Lu9cgcmAeOg-BaabY_QURmnAK780gz6mcAbBOKsccbuNLjvRy8-KKSdL9mGQAe8A7yJDmMtu7kjwXFLC590iZgSwVvGdJGsUn8L6mvSYPfwj8iNE1pgRnm6MNWAkWP_V89LGVHViGv_RXvBh4IywpTSqrCuhk3XGAaXkbU9"/>
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-tertiary rounded-tl-md flex items-center justify-center text-on-tertiary">
+<span class="material-symbols-outlined text-[10px]">check</span>
+</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">HDFC Bank</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Primary Account •••• 9104</span>
+</div>
+</div>
+<button class="h-9 px-3.5 rounded-full bg-surface-container-highest text-primary font-label-md text-label-md hover:bg-primary/10 active:scale-95 transition-all flex items-center gap-1.5" id="switch-bank-btn" type="button">
+<span>Switch</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+<!-- Bank Switcher Dropdown (Expandable) -->
+<div class="hidden pt-2 space-y-2" id="bank-switcher-drawer">
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-colors">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface">State Bank of India (•••• 4892)</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-outline">radio_button_unchecked</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-colors">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface">ICICI Direct (•••• 1278)</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-outline">radio_button_unchecked</span>
+</div>
+</div>
+</div>
+<!-- UPI Alias Row -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">alternate_email</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant">UPI ID Alias</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">user@okhdfcbank</span>
+</div>
+</div>
+<button aria-label="Copy UPI Alias" class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center text-primary active:scale-95 transition-transform" id="copy-alias-btn" type="button">
+<span class="material-symbols-outlined text-[20px]" id="copy-icon">content_copy</span>
+</button>
+</div>
+<!-- Auto Parse SMS Toggle -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex items-center gap-3 pr-2">
+<div class="w-10 h-10 rounded-xl bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">sms</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">Auto-parse UPI Payment SMS</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Extract amount and merchants on arrival</span>
+</div>
+</div>
+<!-- Material 3 Switch Component -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" id="sms-parse-toggle" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-on-surface-variant peer-checked:after:bg-on-tertiary-container after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-tertiary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Section 2: Bank Missed-Call Balance Inquiry -->
+<div class="flex flex-col bg-surface-container rounded-[28px] p-space-lg shadow-sm space-y-4">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm mb-1">
+<div class="w-9 h-9 rounded-2xl bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+</div>
+<h2 class="font-title-md text-title-md text-on-surface">Missed-Call Balance Inquiry</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-11">Call your bank’s official automated balance service with one tap without internet connection.</p>
+</div>
+<!-- Phone Rows -->
+<div class="space-y-2.5">
+<!-- Account 1 -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex flex-col min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<span class="font-title-md text-title-md text-on-surface truncate">SBI Savings</span>
+<span class="font-label-sm text-label-sm px-2 py-0.2 rounded-md bg-surface-container text-on-surface-variant">•• 4892</span>
+</div>
+<span class="font-body-sm text-body-sm text-primary tracking-wide mt-0.5">+91 92237 66666</span>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<button aria-label="Edit SBI Dial Code" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<a aria-label="Call SBI" class="w-10 h-10 rounded-full bg-tertiary-container/30 text-tertiary flex items-center justify-center hover:bg-tertiary hover:text-on-tertiary active:scale-90 transition-all shadow-sm" href="tel:+919223766666">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</a>
+</div>
+</div>
+<!-- Account 2 -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex flex-col min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<span class="font-title-md text-title-md text-on-surface truncate">HDFC Salary</span>
+<span class="font-label-sm text-label-sm px-2 py-0.2 rounded-md bg-surface-container text-on-surface-variant">•• 9104</span>
+</div>
+<span class="font-body-sm text-body-sm text-primary tracking-wide mt-0.5">1800 270 3333</span>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<button aria-label="Edit HDFC Dial Code" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<a aria-label="Call HDFC" class="w-10 h-10 rounded-full bg-surface-container text-on-surface flex items-center justify-center hover:bg-secondary-container/20 hover:text-secondary active:scale-90 transition-all" href="tel:18002703333">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</a>
+</div>
+</div>
+<!-- Account 3 -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex flex-col min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<span class="font-title-md text-title-md text-on-surface truncate">ICICI Bank</span>
+<span class="font-label-sm text-label-sm px-2 py-0.2 rounded-md bg-surface-container text-on-surface-variant">•• 1278</span>
+</div>
+<span class="font-body-sm text-body-sm text-primary tracking-wide mt-0.5">+91 95946 66666</span>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<button aria-label="Edit ICICI Dial Code" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<a aria-label="Call ICICI" class="w-10 h-10 rounded-full bg-surface-container text-on-surface flex items-center justify-center hover:bg-secondary-container/20 hover:text-secondary active:scale-90 transition-all" href="tel:+919594666666">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</a>
+</div>
+</div>
+<!-- Add Bank Button -->
+<button class="w-full py-3.5 px-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-highest text-on-surface-variant hover:text-primary transition-all flex items-center justify-center gap-2 font-label-md text-label-md active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Add Custom Bank Dial Code</span>
+</button>
+</div>
+</div>
+<!-- Section 3: Automated Keyword Categorization Rules -->
+<div class="flex flex-col bg-surface-container rounded-[28px] p-space-lg shadow-sm space-y-4">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">rule</span>
+</div>
+<h2 class="font-title-md text-title-md text-on-surface">Auto-Categorization Rules</h2>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">4 Rules</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-11">Transactions matching keywords are automatically categorized without manual tagging.</p>
+</div>
+<!-- Rules List -->
+<div class="space-y-2.5">
+<!-- Rule 1: Food & Dining -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-title-md text-on-surface">Swiggy, Zomato, UberEats</span>
+<div class="flex items-center gap-1">
+<button aria-label="Edit rule" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete rule" class="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error-container/20" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Maps to</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-orange-400 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">restaurant</span>
+<span>Food &amp; Dining</span>
+</span>
+</div>
+</div>
+<!-- Rule 2: Transport & Fuel -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-title-md text-on-surface">Uber, Ola, Shell, HPCL</span>
+<div class="flex items-center gap-1">
+<button aria-label="Edit rule" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete rule" class="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error-container/20" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Maps to</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">local_gas_station</span>
+<span>Transport &amp; Fuel</span>
+</span>
+</div>
+</div>
+<!-- Rule 3: Shopping -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-title-md text-on-surface">Amazon, Flipkart, Zara</span>
+<div class="flex items-center gap-1">
+<button aria-label="Edit rule" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete rule" class="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error-container/20" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Maps to</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+<span>Shopping</span>
+</span>
+</div>
+</div>
+<!-- Rule 4: Income -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-title-md text-on-surface">Salary, Client Payout</span>
+<div class="flex items-center gap-1">
+<button aria-label="Edit rule" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete rule" class="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error-container/20" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Maps to</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-tertiary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">payments</span>
+<span>Income</span>
+</span>
+</div>
+</div>
+<!-- Add Rule CTA -->
+<button class="w-full py-3 px-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-label-lg text-label-lg transition-all flex items-center justify-center gap-2 active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Add New Keyword Rule</span>
+</button>
+</div>
+</div>
+<!-- Section 4: Data Privacy & Encrypted Local Backup -->
+<div class="flex flex-col bg-surface-container rounded-[28px] p-space-lg shadow-sm space-y-4">
+<!-- Security Banner -->
+<div class="flex items-center gap-3 p-3.5 rounded-2xl bg-tertiary-container/15">
+<div class="w-10 h-10 rounded-xl bg-tertiary-container/30 flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-tertiary leading-tight">100% On-Device &amp; Encrypted</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">AES-256-GCM. Zero cloud telemetry or data extraction.</span>
+</div>
+</div>
+<!-- Backup Actions -->
+<div class="space-y-3">
+<!-- Auto Backup Toggle -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex items-center justify-between">
+<div class="flex items-center gap-3 pr-2">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">update</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">Auto-Backup to Local Storage</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Daily at midnight • Retains 7 snapshots</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-on-surface-variant peer-checked:after:bg-on-tertiary-container after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-tertiary"></div>
+</label>
+</div>
+<!-- Export Tile -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-3">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="font-title-md text-title-md text-on-surface">Export Encrypted Backup</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Generate password-protected JSON/ZIP file with all accounts &amp; ledger history.</span>
+</div>
+</div>
+<div class="flex justify-end">
+<button class="h-10 px-5 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center gap-2 shadow-sm hover:opacity-95 active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span>Export Now</span>
+</button>
+</div>
+</div>
+<!-- Import Tile -->
+<div class="bg-surface-container-high rounded-2xl p-space-md flex flex-col space-y-3">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">file_upload</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="font-title-md text-title-md text-on-surface">Import Backup File</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Restore transactions and custom categorization rules from local storage.</span>
+</div>
+</div>
+<div class="flex justify-end">
+<button class="h-10 px-5 rounded-full bg-surface-container-highest text-on-surface font-label-lg text-label-lg flex items-center gap-2 hover:bg-surface-bright active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">folder_open</span>
+<span>Choose File</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro-delight Toast Indicator (Hidden by default) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-surface-bright text-on-surface font-label-md text-label-md rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 z-50" id="toast">
+<span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+<span id="toast-text">UPI Alias copied to clipboard</span>
+</div>
+</div>
+<script>
+  // Simple interaction behavior
+  document.getElementById('switch-bank-btn')?.addEventListener('click', () => {
+    const drawer = document.getElementById('bank-switcher-drawer');
+    drawer.classList.toggle('hidden');
+  });
+
+  const copyBtn = document.getElementById('copy-alias-btn');
+  const toast = document.getElementById('toast');
+  const copyIcon = document.getElementById('copy-icon');
+
+  copyBtn?.addEventListener('click', () => {
+    navigator.clipboard?.writeText('user@okhdfcbank');
+    copyIcon.textContent = 'done';
+    
+    // Toast show
+    toast.classList.remove('opacity-0', 'pointer-events-none');
+    toast.classList.add('opacity-100');
+    
+    setTimeout(() => {
+      toast.classList.remove('opacity-100');
+      toast.classList.add('opacity-0', 'pointer-events-none');
+      copyIcon.textContent = 'content_copy';
+    }, 2000);
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_16px_rgba(0,0,0,0.35)]" data-active-classes="[&amp;&gt;.nav-pill]:bg-secondary-container/20 [&amp;&gt;.nav-pill]:text-secondary [&amp;&gt;.nav-label]:text-secondary [&amp;&gt;.nav-label]:font-semibold"><div class="flex items-center justify-around h-20 px-space-sm"><a class="group flex flex-col items-center justify-center flex-1 h-full min-h-[44px] gap-1 transition-all" data-path="home" href="#"><div class="nav-pill flex items-center justify-center w-16 h-8 rounded-full text-on-surface-variant group-hover:bg-surface-container group-active:scale-95 transition-all"><span class="material-symbols-outlined text-[22px]">account_balance_wallet</span></div><span class="nav-label font-label-sm text-label-sm text-on-surface-variant transition-colors">Home</span></a><a class="group flex flex-col items-center justify-center flex-1 h-full min-h-[44px] gap-1 transition-all" data-path="ledger" href="#"><div class="nav-pill flex items-center justify-center w-16 h-8 rounded-full text-on-surface-variant group-hover:bg-surface-container group-active:scale-95 transition-all"><span class="material-symbols-outlined text-[22px]">receipt_long</span></div><span class="nav-label font-label-sm text-label-sm text-on-surface-variant transition-colors">Ledger</span></a><a aria-current="page" class="group flex flex-col items-center justify-center flex-1 h-full min-h-[44px] gap-1 transition-all [&amp;&gt;.nav-pill]:bg-secondary-container/20 [&amp;&gt;.nav-pill]:text-secondary [&amp;&gt;.nav-label]:text-secondary [&amp;&gt;.nav-label]:font-semibold" data-path="settings" href="#"><div class="nav-pill flex items-center justify-center w-16 h-8 rounded-full text-on-surface-variant group-hover:bg-surface-container group-active:scale-95 transition-all"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="nav-label font-label-sm text-label-sm text-on-surface-variant transition-colors">Settings</span></a></div></nav></body></html>

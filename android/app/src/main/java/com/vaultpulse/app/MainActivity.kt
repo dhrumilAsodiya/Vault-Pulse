@@ -1,16 +1,21 @@
 package com.vaultpulse.app
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +39,10 @@ import com.vaultpulse.app.ui.viewmodel.VaultViewModel
 class MainActivity : FragmentActivity() {
 
     private var isUnlocked by mutableStateOf(false)
+
+    private val smsPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +69,8 @@ class MainActivity : FragmentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .statusBarsPadding()
+                                .navigationBarsPadding()
                                 .padding(24.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -94,6 +105,23 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private fun checkAndRequestSmsPermissions() {
+        val hasRead = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasReceive = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECEIVE_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasRead || !hasReceive) {
+            smsPermissionLauncher.launch(
+                arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
+            )
+        }
+    }
+
     private fun promptBiometricUnlock() {
         val executor = ContextCompat.getMainExecutor(this)
         val prompt = BiometricPrompt(
@@ -103,6 +131,7 @@ class MainActivity : FragmentActivity() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     isUnlocked = true
+                    checkAndRequestSmsPermissions()
                 }
             }
         )

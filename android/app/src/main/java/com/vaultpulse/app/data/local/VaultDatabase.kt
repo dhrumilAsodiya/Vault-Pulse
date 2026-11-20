@@ -37,6 +37,9 @@ interface AccountDao {
 
     @Query("UPDATE account_profiles SET isPrimaryUpi = (id = :primaryId)")
     suspend fun setPrimaryUpi(primaryId: String)
+
+    @Query("DELETE FROM account_profiles WHERE id = :id")
+    suspend fun deleteById(id: String)
 }
 
 @Dao
@@ -65,6 +68,12 @@ interface TransactionDao {
 
     @Update
     suspend fun update(tx: TransactionEntity)
+
+    @Query("DELETE FROM transactions WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM transactions WHERE accountId = :accountId OR toAccountId = :accountId")
+    suspend fun deleteByAccountId(accountId: String)
 }
 
 @Dao
@@ -122,6 +131,7 @@ abstract class VaultDatabase : RoomDatabase() {
                     "vaultpulse_encrypted.db"
                 )
                     .openHelperFactory(factory)
+                    .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
                     .build()
                     .also { INSTANCE = it }
             }

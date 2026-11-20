@@ -15,7 +15,9 @@
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:label="VaultPulse"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.VaultPulse">
 
@@ -45,7 +47,7 @@
         <service
             android:name=".service.UpiNotificationListenerService"
             android:exported="true"
-            android:label="VaultPulse UPI Capture"
+            android:label="@string/upi_capture_label"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
