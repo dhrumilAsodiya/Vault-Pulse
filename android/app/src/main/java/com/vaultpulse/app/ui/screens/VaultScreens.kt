@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import com.vaultpulse.app.domain.BankSyncManager
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -2344,6 +2346,48 @@ fun EditAccountSheet(
 
             // Bank-specific details
             if (kind == AccountKind.BANK) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "QUICK BANK PRESETS (1-TAP AUTOFILL)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = ObsidianColors.PrimaryContainer,
+                        letterSpacing = 0.05.sp
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(BankSyncManager.POPULAR_BANKS) { preset ->
+                            val isSelected = senderId.equals(preset.keyword, ignoreCase = true)
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) ObsidianColors.PrimaryContainer.copy(alpha = 0.25f)
+                                else ObsidianColors.SurfaceContainerHigh,
+                                border = if (isSelected) BorderStroke(1.dp, ObsidianColors.PrimaryContainer)
+                                else BorderStroke(1.dp, ObsidianColors.HairlineBorder),
+                                modifier = Modifier.clickable {
+                                    if (name.isBlank() || BankSyncManager.POPULAR_BANKS.any { it.name == name }) {
+                                        name = preset.name
+                                    }
+                                    shortName = preset.keyword
+                                    senderId = preset.keyword
+                                    missedCallNumber = preset.missedCallNumber
+                                    if (tagLabel.isBlank()) tagLabel = "Savings"
+                                }
+                            ) {
+                                Text(
+                                    text = preset.keyword,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isSelected) ObsidianColors.PrimaryContainer else ObsidianColors.OnSurface,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = upiAlias,
                     onValueChange = { upiAlias = it },
@@ -2360,7 +2404,7 @@ fun EditAccountSheet(
                     OutlinedTextField(
                         value = senderId,
                         onValueChange = { senderId = it },
-                        label = { Text("SMS Sender ID (e.g. HDFCBK)") },
+                        label = { Text("Bank Keyword (e.g. SBI)") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(

@@ -20,12 +20,37 @@ sealed class BankSyncOutcome {
     data class CallBankFirst(val reason: String) : BankSyncOutcome()
 }
 
+data class BankPreset(
+    val name: String,
+    val keyword: String,
+    val missedCallNumber: String
+)
+
 /**
  * 2-Step Bank Sync & Checkpoint Ledger manager:
  * Step 1: Launch Intent.ACTION_DIAL with profile's saved missed-call number (Dual SIM safe).
- * Step 2: Query SMS Inbox for latest balance SMS from bank senderId, verify TODAY + timestamp > lastSyncedSmsTimestamp.
+ * Step 2: Query SMS Inbox for latest balance SMS from bank, verify TODAY + timestamp > lastSyncedSmsTimestamp.
+ * 
+ * Matches bank SMS flexibly by:
+ * - Stripping carrier prefixes (AD-, VM-, etc.)
+ * - Matching bank keyword in sender ID or body
+ * - Matching account last 4 digits
+ * - Extracting available balance via resilient regex patterns
  */
 object BankSyncManager {
+
+    val POPULAR_BANKS = listOf(
+        BankPreset("State Bank of India (SBI)", "SBI", "09223766666"),
+        BankPreset("HDFC Bank", "HDFC", "18002703333"),
+        BankPreset("ICICI Bank", "ICICI", "9594666123"),
+        BankPreset("Axis Bank", "AXIS", "18004195959"),
+        BankPreset("Kotak Mahindra", "KOTAK", "18002740110"),
+        BankPreset("Punjab National Bank", "PNB", "18001802223"),
+        BankPreset("Bank of Baroda", "BOB", "8468001111"),
+        BankPreset("Canara Bank", "CANARA", "09015483483"),
+        BankPreset("Union Bank of India", "UNION", "09223008586"),
+        BankPreset("IDBI Bank", "IDBI", "18008431122")
+    )
 
     fun launchMissedCallDialer(context: Context, missedCallNumber: String) {
         val cleanNumber = missedCallNumber.replace("\\s+".toRegex(), "")
@@ -49,13 +74,8 @@ object BankSyncManager {
         if (!hasPermission) {
             Log.w(TAG, "READ_SMS permission not granted to app.")
             return BankSyncOutcome.CallBankFirst(
-                "SMS permission is required to read bank balance checkpoints. Please grant SMS access in your phone settings or permission prompt."
+                "SMS permission is required to read bank balance checkpoints. Please grant SMS access in your phone settings."
             )
-        }
-
-        val senderKey = profile.senderId
-        if (senderKey.isNullOrBlank()) {
-            return BankSyncOutcome.CallBankFirst("No SMS sender ID configured for ${profile.name}. Edit account details to add it (e.g. HDFCBK or SBINB).")
         }
 
         try {
@@ -65,52 +85,110 @@ object BankSyncManager {
                 Telephony.Sms.DATE
             )
 
-            var matchedBody: String? = null
-            var matchedTimestamp = 0L
+            // Extract bank keyword from senderId, shortName, or name
+            val bankKeyword = when {
+                !profile.senderId.isNullOrBlank() -> profile.senderId.trim().uppercase()
+                !profile.shortName.isNullOrBlank() -> profile.shortName.trim().uppercase()
+                else -> profile.name.trim().uppercase()
+            }.replace(Regex("[^A-Z0-9]"), "")
 
+            val targetDigits = profile.maskedDigits.trim().replace(Regex("[^0-9]"), "")
+
+            var bestBody: String? = null
+            var bestTimestamp = 0L
+            var bestBalance = 0.0
+
+            // 1. Query the most recent 100 messages from SMS Inbox
             context.contentResolver.query(
                 Telephony.Sms.Inbox.CONTENT_URI,
                 projection,
-                "${Telephony.Sms.ADDRESS} LIKE ?",
-                arrayOf("%$senderKey%"),
+                null,
+                null,
                 "${Telephony.Sms.DATE} DESC"
             )?.use { cursor ->
+                val addrIdx = cursor.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
                 val bodyIdx = cursor.getColumnIndexOrThrow(Telephony.Sms.BODY)
                 val dateIdx = cursor.getColumnIndexOrThrow(Telephony.Sms.DATE)
-                while (cursor.moveToNext()) {
+
+                var count = 0
+                while (cursor.moveToNext() && count < 100) {
+                    count++
+                    val rawSender = cursor.getString(addrIdx).orEmpty()
                     val body = cursor.getString(bodyIdx).orEmpty()
                     val ts = cursor.getLong(dateIdx)
-                    if (SmsParser.extractAvailableBalance(body) != null) {
-                        matchedBody = body
-                        matchedTimestamp = ts
-                        break
+
+                    val cleanSender = SmsParser.cleanSenderHeader(rawSender)
+                    val senderMatches = bankKeyword.isEmpty() ||
+                        cleanSender.contains(bankKeyword) ||
+                        rawSender.uppercase().contains(bankKeyword) ||
+                        body.uppercase().contains(bankKeyword)
+
+                    val digitsMatch = if (targetDigits.isNotEmpty()) {
+                        body.contains(targetDigits)
+                    } else {
+                        true
+                    }
+
+                    if (senderMatches && digitsMatch) {
+                        val bal = SmsParser.extractAvailableBalance(body)
+                        if (bal != null) {
+                            bestBody = body
+                            bestTimestamp = ts
+                            bestBalance = bal
+                            break // Top-most message is the newest matching balance SMS
+                        }
                     }
                 }
             }
 
-            val latestBody = matchedBody
+            // 2. Fallback: If not found with bank keyword, match purely by last 4 digits + balance pattern
+            if (bestBody == null && targetDigits.isNotEmpty()) {
+                context.contentResolver.query(
+                    Telephony.Sms.Inbox.CONTENT_URI,
+                    projection,
+                    "${Telephony.Sms.BODY} LIKE ?",
+                    arrayOf("%$targetDigits%"),
+                    "${Telephony.Sms.DATE} DESC"
+                )?.use { cursor ->
+                    val bodyIdx = cursor.getColumnIndexOrThrow(Telephony.Sms.BODY)
+                    val dateIdx = cursor.getColumnIndexOrThrow(Telephony.Sms.DATE)
+                    while (cursor.moveToNext()) {
+                        val body = cursor.getString(bodyIdx).orEmpty()
+                        val ts = cursor.getLong(dateIdx)
+                        val bal = SmsParser.extractAvailableBalance(body)
+                        if (bal != null) {
+                            bestBody = body
+                            bestTimestamp = ts
+                            bestBalance = bal
+                            break
+                        }
+                    }
+                }
+            }
+
+            val latestBody = bestBody
                 ?: return BankSyncOutcome.CallBankFirst(
-                    "No balance SMS found from $senderKey. Tap Call Bank first, wait for the SMS, then run Sync SMS."
+                    "No balance SMS found for ${profile.name} (ending in ...$targetDigits). Tap 'Call Bank' first, wait for the SMS, then tap 'Sync SMS'."
                 )
 
-            if (!isSameLocalDay(matchedTimestamp, System.currentTimeMillis()) ||
-                matchedTimestamp <= profile.lastSyncedSmsTimestamp
-            ) {
+            val now = System.currentTimeMillis()
+            if (!isSameLocalDay(bestTimestamp, now)) {
                 return BankSyncOutcome.CallBankFirst(
-                    "Latest balance SMS is not newer than your last checkpoint sync today. Please tap Call Bank first."
+                    "The latest balance SMS found is from a previous day. Please tap 'Call Bank' to receive a fresh balance update for today."
                 )
             }
 
-            val parsedBalance = SmsParser.extractAvailableBalance(latestBody)
-                ?: return BankSyncOutcome.CallBankFirst(
-                    "Could not extract balance from SMS: \"${latestBody.take(60)}...\". Please call bank again."
+            if (bestTimestamp <= profile.lastSyncedSmsTimestamp) {
+                return BankSyncOutcome.CallBankFirst(
+                    "You have already synced with the latest SMS from today. If your balance changed, tap 'Call Bank' first to request a new statement."
                 )
+            }
 
-            db.accountDao().snapCheckpointBalance(profile.id, parsedBalance, matchedTimestamp)
-            return BankSyncOutcome.Success(parsedBalance, matchedTimestamp, latestBody)
+            db.accountDao().snapCheckpointBalance(profile.id, bestBalance, bestTimestamp)
+            return BankSyncOutcome.Success(bestBalance, bestTimestamp, latestBody)
         } catch (e: SecurityException) {
             Log.e(TAG, "SecurityException reading SMS", e)
-            return BankSyncOutcome.CallBankFirst("SMS permission denied by Android security policy. Please grant SMS permission.")
+            return BankSyncOutcome.CallBankFirst("SMS permission denied by Android security policy. Please grant SMS permission in Settings.")
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error in syncLatestBankSms", e)
             return BankSyncOutcome.CallBankFirst("Error reading bank SMS: ${e.message ?: "Unknown error"}")

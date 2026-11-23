@@ -37,20 +37,43 @@ object SmsParser {
     )
 
     private val AMOUNT_REGEX = Regex("(?:rs\\.?|inr|₹)\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)", RegexOption.IGNORE_CASE)
-    private val AVL_BAL_REGEX = Regex(
-        "(?:avl\\.?\\s*bal(?:ance)?|available\\s*bal(?:ance)?|clear\\s*bal(?:ance)?|bal(?:ance)?)\\s*(?:is|:|-)?\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)",
-        RegexOption.IGNORE_CASE
+
+    // Robust balance regex patterns for Indian banking SMS
+    private val AVL_BAL_PATTERNS = listOf(
+        // Direct: "Avl Bal: Rs 15,420.50" or "Available Balance: INR 25,000.00"
+        Regex("(?:avl\\.?\\s*bal(?:ance)?|available\\s*bal(?:ance)?|clear\\s*bal(?:ance)?)\\s*(?:is|:|-)?\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)", RegexOption.IGNORE_CASE),
+        // Spaced: "Bal in A/c ...1234 on 23-NOV-26 is Rs 15,420.50" or "Bal in A/c XX1234 as on 23/11 is INR 10,500.00"
+        Regex("\\b(?:bal(?:ance)?|avl(?:\\.?|\\s*bal(?:ance)?)|available\\s*bal(?:ance)?)\\b.*?\\b(?:is|:|-)\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)", RegexOption.IGNORE_CASE),
+        // Inverted: "Rs. 15,420.50 is your available balance"
+        Regex("(?:rs\\.?|inr|₹)\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)\\s*(?:is\\s*)?(?:your\\s*)?(?:avl|available|clear)?\\s*bal", RegexOption.IGNORE_CASE),
+        // Simple: "Bal: Rs. 15,420.50"
+        Regex("\\bbal(?:ance)?\\s*(?:is|:|-)\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)", RegexOption.IGNORE_CASE)
     )
-    private val MASKED_DIGITS_REGEX = Regex("(?:a/c|acct|account|card|[xX*•]{2,})\\s*(?:ending\\s*(?:with|in)?\\s*)?(?:[xX*•]+\\s*)?(\\d{4})\\b", RegexOption.IGNORE_CASE)
+
+    private val MASKED_DIGITS_REGEX = Regex("(?:a/c|acct|account|card|[xX*•]{2,})\\s*(?:ending\\s*(?:with|in)?\\s*)?(?:[xX*•.]+\\s*)?(\\d{3,4})\\b", RegexOption.IGNORE_CASE)
     private val DEBIT_REGEX = Regex("\\b(debited|debit|spent|paid|withdrawn|sent|purchase|charged|deducted)\\b", RegexOption.IGNORE_CASE)
     private val CREDIT_REGEX = Regex("\\b(credited|credit|received|deposited|refund|cashback|salary|payout)\\b", RegexOption.IGNORE_CASE)
     private val MERCHANT_REGEX = Regex("\\b(?:paid to|sent to|to|at|towards|from)\\s+([A-Za-z0-9 &._'-]{2,36}?)(?:\\s+(?:on|via|ref|utr|upi|avl|bal|using)|[.,;]|$)", RegexOption.IGNORE_CASE)
 
     fun isBlocked(text: String): Boolean = NEGATIVE_BLOCKLIST.any { it.containsMatchIn(text) }
 
+    /**
+     * Strips telecom routing prefixes like "AD-", "VM-", "VK-", "JM-" from SMS sender headers.
+     * Example: "AD-SBIINB" -> "SBIINB", "VM-HDFCBK" -> "HDFCBK"
+     */
+    fun cleanSenderHeader(sender: String): String {
+        return sender.replaceFirst(Regex("^[A-Za-z]{2}-"), "").uppercase()
+    }
+
     fun extractAvailableBalance(text: String): Double? {
-        val match = AVL_BAL_REGEX.find(text) ?: return null
-        return match.groupValues[1].replace(",", "").toDoubleOrNull()
+        for (pattern in AVL_BAL_PATTERNS) {
+            val match = pattern.find(text)
+            if (match != null) {
+                val value = match.groupValues[1].replace(",", "").toDoubleOrNull()
+                if (value != null && value >= 0.0) return value
+            }
+        }
+        return null
     }
 
     fun parseSms(senderId: String, body: String, timestamp: Long): ParsedEvent? {
@@ -144,9 +167,13 @@ object DeduplicationEngine {
             accounts.firstOrNull { it.maskedDigits == event.maskedDigits }?.let { return it }
         }
 
-        val upperSender = event.senderOrPackage.uppercase()
-        accounts.firstOrNull { !it.senderId.isNullOrBlank() && upperSender.contains(it.senderId.uppercase()) }
-            ?.let { return it }
+        val cleanSender = SmsParser.cleanSenderHeader(event.senderOrPackage)
+        accounts.firstOrNull { acc ->
+            val key = acc.senderId?.trim()?.uppercase()
+            val shortKey = acc.shortName.trim().uppercase()
+            (!key.isNullOrBlank() && cleanSender.contains(key)) ||
+                (shortKey.isNotEmpty() && cleanSender.contains(shortKey))
+        }?.let { return it }
 
         // Default Primary Profile for UPI notifications & unmatched events
         return accounts.firstOrNull { it.isPrimaryUpi } ?: accounts.firstOrNull()

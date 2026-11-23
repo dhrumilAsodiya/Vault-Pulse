@@ -214,6 +214,19 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun promptBiometricUnlock() {
+        val biometricManager = BiometricManager.from(this)
+        val canAuth = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        )
+
+        // If running on an emulator or device without any enrolled fingerprint or screen lock PIN,
+        // unlock directly so the user is not locked out.
+        if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+            isUnlocked = true
+            return
+        }
+
         val executor = ContextCompat.getMainExecutor(this)
         val prompt = BiometricPrompt(
             this,
@@ -222,8 +235,17 @@ class MainActivity : FragmentActivity() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     isUnlocked = true
-                    // SMS permission is requested lazily when the user taps "Sync SMS"
-                    // — never from inside a biometric callback (causes requestCode crash)
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    // If no biometrics enrolled or hardware unavailable, allow access
+                    if (errorCode == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+                        errorCode == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+                        errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE
+                    ) {
+                        isUnlocked = true
+                    }
                 }
             }
         )
